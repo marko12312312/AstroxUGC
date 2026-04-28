@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Roblox Group Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  :root {
+    --bg: #08080a;
+    --bg2: #0e0e12;
+    --bg3: #141418;
+    --bg4: #1a1a20;
+    --border: #222228;
+    --border2: #2a2a34;
+    --text: #e8e6f0;
+    --text2: #9996b0;
+    --text3: #55536a;
+    --green: #00e87a;
+    --green-dim: #00e87a22;
+    --blue: #4d9fff;
+    --blue-dim: #4d9fff22;
+    --purple: #a259ff;
+    --purple-dim: #a259ff22;
+    --amber: #ffb830;
+    --amber-dim: #ffb83022;
+    --red: #ff4d6a;
+    --red-dim: #ff4d6a22;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: 'Rajdhani', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: 220px;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+  .sidebar-logo {
+    padding: 20px 18px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo-text {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: var(--text);
+  }
+  .logo-sub {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: 'JetBrains Mono', monospace;
+    margin-top: 2px;
+  }
+  .live-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--green);
+  }
+  .live-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: pulse 1.4s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.8)} }
+
+  .sidebar-nav { flex: 1; padding: 12px 0; }
+  .nav-label {
+    font-size: 10px;
+    color: var(--text3);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 8px 18px 4px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text2);
+    cursor: pointer;
+    transition: all 0.15s;
+    border-left: 2px solid transparent;
+    letter-spacing: 0.03em;
+  }
+  .nav-item:hover { color: var(--text); background: var(--bg3); }
+  .nav-item.active { color: var(--green); border-left-color: var(--green); background: var(--green-dim); }
+  .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+
+  .sidebar-footer {
+    padding: 14px 18px;
+    border-top: 1px solid var(--border);
+  }
+  .group-info-mini {
+    font-size: 12px;
+    color: var(--text3);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .group-name-mini {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text2);
+    margin-bottom: 2px;
+  }
+
+  /* ── MAIN AREA ── */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+    flex-shrink: 0;
+  }
+  .page-title {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .refresh-btn {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    color: var(--text2);
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .refresh-btn:hover { color: var(--text); border-color: var(--text3); }
+  .last-updated {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 24px;
+  }
+
+  /* ── PAGES ── */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ── CARDS ── */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .stat-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+  .stat-card.green::before { background: var(--green); }
+  .stat-card.blue::before { background: var(--blue); }
+  .stat-card.purple::before { background: var(--purple); }
+  .stat-card.amber::before { background: var(--amber); }
+  .stat-lbl {
+    font-size: 10px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 6px;
+  }
+  .stat-val {
+    font-size: 26px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: -0.02em;
+  }
+  .stat-val.green { color: var(--green); }
+  .stat-val.blue { color: var(--blue); }
+  .stat-val.purple { color: var(--purple); }
+  .stat-val.amber { color: var(--amber); }
+  .stat-sub {
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 4px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ── PANELS ── */
+  .panel {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+  }
+  .panel-title {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text2);
+  }
+  .panel-badge {
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: var(--bg4);
+    color: var(--text3);
+    border: 1px solid var(--border);
+  }
+
+  /* ── LIVE FEED ── */
+  .feed-list { max-height: 520px; overflow-y: auto; }
+  .feed-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 11px 18px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+    animation: slideIn 0.3s ease;
+  }
+  @keyframes slideIn { from { opacity:0; transform:translateX(-8px); } to { opacity:1; transform:translateX(0); } }
+  .feed-item:hover { background: var(--bg3); }
+  .feed-item:last-child { border-bottom: none; }
+  .feed-avatar {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    background: var(--bg4);
+    border: 1px solid var(--border2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+  .feed-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .feed-info { flex: 1; min-width: 0; }
+  .feed-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .feed-meta {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: 'JetBrains Mono', monospace;
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .feed-right { text-align: right; flex-shrink: 0; }
+  .feed-amount {
+    font-size: 14px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--green);
+  }
+  .feed-time {
+    font-size: 10px;
+    color: var(--text3);
+    font-family: 'JetBrains Mono', monospace;
+    margin-top: 2px;
+  }
+  .type-badge {
+    font-size: 9px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--blue-dim);
+    color: var(--blue);
+    border: 1px solid var(--blue)44;
+  }
+
+  /* ── TWO COL ── */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .three-col { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 16px; }
+
+  /* ── CHART ── */
+  .chart-wrap { padding: 16px 18px; }
+  canvas { max-height: 220px; }
+
+  /* ── TOP ITEMS TABLE ── */
+  .top-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 18px;
+    border-bottom: 1px solid var(--border);
+  }
+  .top-item:last-child { border-bottom: none; }
+  .top-rank {
+    font-size: 12px;
+    color: var(--text3);
+    font-family: 'JetBrains Mono', monospace;
+    width: 18px;
+    text-align: right;
+  }
+  .top-info { flex: 1; min-width: 0; }
+  .top-name {
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .top-sales { font-size: 11px; color: var(--text3); font-family: 'JetBrains Mono', monospace; }
+  .top-rev {
+    font-size: 13px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--green);
+  }
+  .top-bar-wrap { width: 80px; height: 4px; background: var(--bg4); border-radius: 2px; overflow: hidden; }
+  .top-bar { height: 100%; background: var(--green); border-radius: 2px; transition: width 0.8s ease; }
+
+  /* ── MEMBERS PAGE ── */
+  .members-controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+    align-items: center;
+  }
+  .search-input {
+    flex: 1;
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    padding: 9px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: 'Rajdhani', sans-serif;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .search-input:focus { border-color: var(--blue); }
+  .search-input::placeholder { color: var(--text3); }
+  .filter-select {
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    color: var(--text2);
+    padding: 9px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: 'Rajdhani', sans-serif;
+    outline: none;
+    cursor: pointer;
+  }
+  .members-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+  }
+  .member-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    transition: border-color 0.15s;
+    cursor: pointer;
+  }
+  .member-card:hover { border-color: var(--border2); }
+  .member-card.has-purchased { border-color: var(--green)44; }
+  .member-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .member-avatar {
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    background: var(--bg4);
+    border: 1px solid var(--border2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+  .member-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .member-name { font-size: 15px; font-weight: 700; }
+  .member-role {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: 'JetBrains Mono', monospace;
+    margin-top: 1px;
+  }
+  .member-joined {
+    font-size: 10px;
+    color: var(--text3);
+    font-family: 'JetBrains Mono', monospace;
+    margin-top: 2px;
+  }
+  .member-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .member-stat {
+    background: var(--bg3);
+    border-radius: 6px;
+    padding: 8px 10px;
+  }
+  .member-stat-lbl {
+    font-size: 9px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .member-stat-val {
+    font-size: 15px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    margin-top: 2px;
+  }
+  .member-stat-val.green { color: var(--green); }
+  .purchased-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--green-dim);
+    color: var(--green);
+    border: 1px solid var(--green)44;
+    padding: 2px 7px;
+    border-radius: 4px;
+    margin-top: 8px;
+  }
+
+  /* ── ANALYTICS PAGE ── */
+  .analytics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+
+  /* ── LOADING / ERROR ── */
+  .loading {
+    text-align: center;
+    padding: 40px;
+    color: var(--text3);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+  }
+  .loading-spinner {
+    display: inline-block;
+    width: 20px; height: 20px;
+    border: 2px solid var(--border2);
+    border-top-color: var(--green);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 10px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .error-msg {
+    background: var(--red-dim);
+    border: 1px solid var(--red)44;
+    color: var(--red);
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    margin: 16px;
+  }
+
+  /* ── PAGINATION ── */
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px;
+    border-top: 1px solid var(--border);
+  }
+  .page-btn {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    color: var(--text2);
+    padding: 6px 16px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .page-btn:hover:not(:disabled) { color: var(--text); border-color: var(--text3); }
+  .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .page-info { font-size: 11px; color: var(--text3); font-family: 'JetBrains Mono', monospace; }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg2); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-text">⚡ DASHBOARD</div>
+    <div class="logo-sub">GROUP ANALYTICS</div>
+    <div class="live-indicator"><span class="live-dot"></span> LIVE</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-label">Overview</div>
+    <div class="nav-item active" onclick="showPage('sales')">
+      <span class="nav-icon">📡</span> Live Sales
+    </div>
+    <div class="nav-item" onclick="showPage('members')">
+      <span class="nav-icon">👥</span> Members
+    </div>
+    <div class="nav-item" onclick="showPage('analytics')">
+      <span class="nav-icon">📊</span> Analytics
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="group-name-mini" id="sidebarGroupName">Loading...</div>
+    <div class="group-info-mini" id="sidebarGroupMembers">— members</div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="page-title" id="pageTitle">Live Sales Feed</div>
+    <div class="topbar-right">
+      <div class="last-updated" id="lastUpdated">Loading...</div>
+      <button class="refresh-btn" onclick="refreshCurrentPage()">↻ Refresh</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ── SALES PAGE ── -->
+    <div class="page active" id="page-sales">
+      <div class="stat-grid">
+        <div class="stat-card green">
+          <div class="stat-lbl">Today's Sales</div>
+          <div class="stat-val green" id="s-totalSales">—</div>
+          <div class="stat-sub">transactions</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-lbl">Today's Revenue</div>
+          <div class="stat-val blue" id="s-totalRevenue">—</div>
+          <div class="stat-sub">robux earned</div>
+        </div>
+        <div class="stat-card amber">
+          <div class="stat-lbl">Avg Order Value</div>
+          <div class="stat-val amber" id="s-avgOrder">—</div>
+          <div class="stat-sub">per transaction</div>
+        </div>
+        <div class="stat-card purple">
+          <div class="stat-lbl">Last Sale</div>
+          <div class="stat-val purple" id="s-lastSale" style="font-size:18px;">—</div>
+          <div class="stat-sub">most recent</div>
+        </div>
+      </div>
+
+      <div class="three-col">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Live Transaction Feed</div>
+            <div class="panel-badge" id="feedCount">0 entries</div>
+          </div>
+          <div class="feed-list" id="feedList">
+            <div class="loading"><div class="loading-spinner"></div><br>Fetching transactions...</div>
+          </div>
+          <div class="pagination" id="feedPagination" style="display:none">
+            <button class="page-btn" id="feedPrevBtn" onclick="loadFeedPage(-1)" disabled>← Prev</button>
+            <span class="page-info" id="feedPageInfo">Page 1</span>
+            <button class="page-btn" id="feedNextBtn" onclick="loadFeedPage(1)">Next →</button>
+          </div>
+        </div>
+
+        <div>
+          <div class="panel" style="margin-bottom:16px">
+            <div class="panel-header"><div class="panel-title">Top Items Today</div></div>
+            <div id="topItemsList"><div class="loading">Loading...</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── MEMBERS PAGE ── -->
+    <div class="page" id="page-members">
+      <div class="stat-grid">
+        <div class="stat-card blue">
+          <div class="stat-lbl">Total Members</div>
+          <div class="stat-val blue" id="m-totalMembers">—</div>
+          <div class="stat-sub">in group</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-lbl">Have Purchased</div>
+          <div class="stat-val green" id="m-hasPurchased">—</div>
+          <div class="stat-sub">buyers in group</div>
+        </div>
+        <div class="stat-card amber">
+          <div class="stat-lbl">Conversion Rate</div>
+          <div class="stat-val amber" id="m-conversion">—</div>
+          <div class="stat-sub">members → buyers</div>
+        </div>
+        <div class="stat-card purple">
+          <div class="stat-lbl">Total Roles</div>
+          <div class="stat-val purple" id="m-totalRoles">—</div>
+          <div class="stat-sub">group roles</div>
+        </div>
+      </div>
+
+      <div class="members-controls">
+        <input class="search-input" id="memberSearch" placeholder="Search members by username..." oninput="filterMembers()">
+        <select class="filter-select" id="memberFilter" onchange="filterMembers()">
+          <option value="all">All Members</option>
+          <option value="purchased">Has Purchased</option>
+          <option value="not-purchased">Not Purchased</option>
+        </select>
+      </div>
+
+      <div class="members-grid" id="membersGrid">
+        <div class="loading" style="grid-column:1/-1"><div class="loading-spinner"></div><br>Loading members...</div>
+      </div>
+
+      <div class="pagination" id="membersPagination" style="display:none; border:none; background:transparent">
+        <button class="page-btn" id="membersPrevBtn" onclick="loadMembersPage(-1)" disabled>← Prev</button>
+        <span class="page-info" id="membersPageInfo">Page 1</span>
+        <button class="page-btn" id="membersNextBtn" onclick="loadMembersPage(1)">Next →</button>
+      </div>
+    </div>
+
+    <!-- ── ANALYTICS PAGE ── -->
+    <div class="page" id="page-analytics">
+      <div class="stat-grid">
+        <div class="stat-card green">
+          <div class="stat-lbl">Total Revenue</div>
+          <div class="stat-val green" id="a-totalRevenue">—</div>
+          <div class="stat-sub">all time (sampled)</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-lbl">Total Sales</div>
+          <div class="stat-val blue" id="a-totalSales">—</div>
+          <div class="stat-sub">transactions</div>
+        </div>
+        <div class="stat-card amber">
+          <div class="stat-lbl">Avg Order Value</div>
+          <div class="stat-val amber" id="a-avgOrder">—</div>
+          <div class="stat-sub">per sale</div>
+        </div>
+        <div class="stat-card purple">
+          <div class="stat-lbl">Top Item</div>
+          <div class="stat-val purple" id="a-topItem" style="font-size:14px;">—</div>
+          <div class="stat-sub">best seller</div>
+        </div>
+      </div>
+
+      <div class="analytics-grid">
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">Revenue (Last 14 Days)</div></div>
+          <div class="chart-wrap"><canvas id="revenueChart"></canvas></div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">Sales by Item</div></div>
+          <div class="chart-wrap"><canvas id="itemChart"></canvas></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Top Selling Items</div>
+          <div class="panel-badge" id="a-itemCount">— items</div>
+        </div>
+        <div id="analyticsTopItems"><div class="loading">Loading analytics...</div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const API = 'https://astroxugc.onrender.com/api';
+
+// ── STATE ──────────────────────────────────────────────────────────────────
+let currentPage = 'sales';
+let feedCursors = [null];
+let feedPageIdx = 0;
+let membersCursors = [null];
+let membersPageIdx = 0;
+let allMembers = [];
+let allTransactions = [];
+let buyerIds = new Set();
+let rolesMap = {};
+let revenueChart = null;
+let itemChart = null;
+
+// ── NAV ───────────────────────────────────────────────────────────────────
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.querySelectorAll('.nav-item')[['sales','members','analytics'].indexOf(page)].classList.add('active');
+  const titles = { sales: 'Live Sales Feed', members: 'Group Members', analytics: 'Analytics' };
+  document.getElementById('pageTitle').textContent = titles[page];
+  currentPage = page;
+  if (page === 'members' && allMembers.length === 0) loadMembers();
+  if (page === 'analytics') loadAnalytics();
+}
+
+function refreshCurrentPage() {
+  if (currentPage === 'sales') { feedCursors = [null]; feedPageIdx = 0; loadFeed(); }
+  if (currentPage === 'members') { membersCursors = [null]; membersPageIdx = 0; allMembers = []; loadMembers(); }
+  if (currentPage === 'analytics') loadAnalytics();
+}
+
+function setLastUpdated() {
+  document.getElementById('lastUpdated').textContent = 'Updated ' + new Date().toLocaleTimeString();
+}
+
+function timeSince(dateStr) {
+  if (!dateStr) return '—';
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const s = Math.floor(diff / 1000);
+  if (s < 60) return s + 's ago';
+  if (s < 3600) return Math.floor(s/60) + 'm ago';
+  if (s < 86400) return Math.floor(s/3600) + 'h ago';
+  return Math.floor(s/86400) + 'd ago';
+}
+
+// ── GROUP INFO ────────────────────────────────────────────────────────────
+async function loadGroupInfo() {
+  try {
+    const res = await fetch(`${API}/group`);
+    const data = await res.json();
+    if (data.displayName || data.name) {
+      document.getElementById('sidebarGroupName').textContent = data.displayName || data.name;
+    }
+    if (data.memberCount) {
+      document.getElementById('sidebarGroupMembers').textContent = data.memberCount.toLocaleString() + ' members';
+      document.getElementById('m-totalMembers').textContent = data.memberCount.toLocaleString();
+    }
+  } catch(e) { console.error('Group info error:', e); }
+}
+
+// ── FEED PAGE ─────────────────────────────────────────────────────────────
+async function loadFeed() {
+  const feedEl = document.getElementById('feedList');
+  feedEl.innerHTML = '<div class="loading"><div class="loading-spinner"></div><br>Fetching transactions...</div>';
+
+  try {
+    const cursor = feedCursors[feedPageIdx];
+    const url = cursor ? `${API}/transactions?cursor=${cursor}` : `${API}/transactions`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+
+    const txs = data.transactions || [];
+    allTransactions = txs;
+
+    // Extract buyer IDs for member cross-referencing
+    txs.forEach(tx => {
+      if (tx.agent?.user?.userId) buyerIds.add(String(tx.agent.user.userId));
+    });
+
+    if (data.nextPageToken && feedCursors.length <= feedPageIdx + 1) {
+      feedCursors.push(data.nextPageToken);
+    }
+
+    renderFeed(txs);
+    updateFeedStats(txs);
+    updateTopItems(txs);
+    setLastUpdated();
+
+    // Pagination controls
+    const pagination = document.getElementById('feedPagination');
+    pagination.style.display = 'flex';
+    document.getElementById('feedPrevBtn').disabled = feedPageIdx === 0;
+    document.getElementById('feedNextBtn').disabled = !data.nextPageToken;
+    document.getElementById('feedPageInfo').textContent = `Page ${feedPageIdx + 1}`;
+    document.getElementById('feedCount').textContent = `${txs.length} entries`;
+
+  } catch(e) {
+    feedEl.innerHTML = `<div class="error-msg">⚠ Error loading transactions: ${e.message}<br><br>Make sure your server is running and your API key has "groups" read permission.</div>`;
+  }
+}
+
+function loadFeedPage(dir) {
+  feedPageIdx += dir;
+  if (feedPageIdx < 0) feedPageIdx = 0;
+  loadFeed();
+}
+
+function renderFeed(txs) {
+  const el = document.getElementById('feedList');
+  if (!txs.length) { el.innerHTML = '<div class="loading">No transactions found.</div>'; return; }
+
+  el.innerHTML = txs.map(tx => {
+    const amount = tx.robuxAmount || 0;
+    const name = tx.details?.name || 'Unknown Item';
+    const buyer = tx.agent?.user?.username || tx.agent?.user?.userId || 'Unknown';
+    const time = timeSince(tx.timestamp);
+    const type = tx.transactionType || 'Sale';
+    return `
+      <div class="feed-item">
+        <div class="feed-avatar">🧩</div>
+        <div class="feed-info">
+          <div class="feed-name">${escHtml(name)}</div>
+          <div class="feed-meta">
+            <span class="type-badge">${type}</span>
+            <span>→ ${escHtml(String(buyer))}</span>
+          </div>
+        </div>
+        <div class="feed-right">
+          <div class="feed-amount">+R$${amount.toLocaleString()}</div>
+          <div class="feed-time">${time}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function updateFeedStats(txs) {
+  const total = txs.reduce((s, t) => s + (t.robuxAmount || 0), 0);
+  const avg = txs.length ? Math.round(total / txs.length) : 0;
+  const last = txs[0];
+  document.getElementById('s-totalSales').textContent = txs.length.toLocaleString();
+  document.getElementById('s-totalRevenue').textContent = 'R$' + total.toLocaleString();
+  document.getElementById('s-avgOrder').textContent = 'R$' + avg;
+  document.getElementById('s-lastSale').textContent = last ? timeSince(last.timestamp) : '—';
+}
+
+function updateTopItems(txs) {
+  const map = {};
+  txs.forEach(tx => {
+    const name = tx.details?.name || 'Unknown';
+    if (!map[name]) map[name] = { name, rev: 0, sales: 0 };
+    map[name].rev += tx.robuxAmount || 0;
+    map[name].sales++;
+  });
+  const sorted = Object.values(map).sort((a,b) => b.rev - a.rev).slice(0, 8);
+  const maxRev = sorted[0]?.rev || 1;
+
+  document.getElementById('topItemsList').innerHTML = sorted.length ? sorted.map((item, i) => `
+    <div class="top-item">
+      <div class="top-rank">${i+1}</div>
+      <div class="top-info">
+        <div class="top-name">${escHtml(item.name)}</div>
+        <div class="top-sales">${item.sales} sold</div>
+      </div>
+      <div class="top-bar-wrap"><div class="top-bar" style="width:${Math.round(item.rev/maxRev*100)}%"></div></div>
+      <div class="top-rev">R$${item.rev.toLocaleString()}</div>
+    </div>`).join('') : '<div class="loading">No items yet.</div>';
+}
+
+// ── MEMBERS PAGE ──────────────────────────────────────────────────────────
+async function loadMembers() {
+  document.getElementById('membersGrid').innerHTML = '<div class="loading" style="grid-column:1/-1"><div class="loading-spinner"></div><br>Loading members...</div>';
+
+  try {
+    // Load roles first
+    const rolesRes = await fetch(`${API}/roles`);
+    const rolesData = await rolesRes.json();
+    rolesMap = {};
+    (rolesData.roles || []).forEach(r => {
+      rolesMap[r.id] = r.displayName || r.name;
+    });
+    document.getElementById('m-totalRoles').textContent = (rolesData.roles || []).length;
+
+    // Load members
+    const cursor = membersCursors[membersPageIdx];
+    const url = cursor ? `${API}/members?cursor=${cursor}&limit=24` : `${API}/members?limit=24`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+
+    const members = data.memberships || data.members || [];
+    allMembers = members;
+
+    if (data.nextPageToken && membersCursors.length <= membersPageIdx + 1) {
+      membersCursors.push(data.nextPageToken);
+    }
+
+    // Stats
+    const purchasedCount = members.filter(m => {
+      const uid = m.user?.userId || m.userId;
+      return uid && buyerIds.has(String(uid));
+    }).length;
+    document.getElementById('m-hasPurchased').textContent = purchasedCount;
+    const conv = members.length ? Math.round(purchasedCount / members.length * 100) : 0;
+    document.getElementById('m-conversion').textContent = conv + '%';
+
+    renderMembers(members);
+    setLastUpdated();
+
+    // Pagination
+    const pagination = document.getElementById('membersPagination');
+    pagination.style.display = 'flex';
+    document.getElementById('membersPrevBtn').disabled = membersPageIdx === 0;
+    document.getElementById('membersNextBtn').disabled = !data.nextPageToken;
+    document.getElementById('membersPageInfo').textContent = `Page ${membersPageIdx + 1}`;
+
+  } catch(e) {
+    document.getElementById('membersGrid').innerHTML = `<div class="error-msg" style="grid-column:1/-1">⚠ Error loading members: ${e.message}</div>`;
+  }
+}
+
+function loadMembersPage(dir) {
+  membersPageIdx += dir;
+  if (membersPageIdx < 0) membersPageIdx = 0;
+  loadMembers();
+}
+
+function renderMembers(members) {
+  const search = document.getElementById('memberSearch').value.toLowerCase();
+  const filter = document.getElementById('memberFilter').value;
+
+  let filtered = members.filter(m => {
+    const name = (m.user?.displayName || m.user?.name || m.userId || '').toLowerCase();
+    const uid = String(m.user?.userId || m.userId || '');
+    const hasPurchased = buyerIds.has(uid);
+    if (search && !name.includes(search)) return false;
+    if (filter === 'purchased' && !hasPurchased) return false;
+    if (filter === 'not-purchased' && hasPurchased) return false;
+    return true;
+  });
+
+  const el = document.getElementById('membersGrid');
+  if (!filtered.length) { el.innerHTML = '<div class="loading" style="grid-column:1/-1">No members match your filter.</div>'; return; }
+
+  el.innerHTML = filtered.map(m => {
+    const uid = String(m.user?.userId || m.userId || '');
+    const name = m.user?.displayName || m.user?.name || uid || 'Unknown';
+    const roleId = m.role?.id || m.roleId;
+    const roleName = roleId ? (rolesMap[roleId] || 'Member') : 'Member';
+    const joined = m.createTime ? new Date(m.createTime).toLocaleDateString() : '—';
+    const hasPurchased = buyerIds.has(uid);
+    const buyerTxs = allTransactions.filter(tx => String(tx.agent?.user?.userId) === uid);
+    const totalSpent = buyerTxs.reduce((s, t) => s + (t.robuxAmount || 0), 0);
+
+    return `
+      <div class="member-card ${hasPurchased ? 'has-purchased' : ''}">
+        <div class="member-top">
+          <div class="member-avatar">👤</div>
+          <div>
+            <div class="member-name">${escHtml(name)}</div>
+            <div class="member-role">${escHtml(roleName)}</div>
+            <div class="member-joined">Joined ${joined}</div>
+          </div>
+        </div>
+        <div class="member-stats">
+          <div class="member-stat">
+            <div class="member-stat-lbl">Purchases</div>
+            <div class="member-stat-val ${hasPurchased ? 'green' : ''}">${buyerTxs.length}</div>
+          </div>
+          <div class="member-stat">
+            <div class="member-stat-lbl">Spent</div>
+            <div class="member-stat-val ${hasPurchased ? 'green' : ''}">R$${totalSpent}</div>
+          </div>
+        </div>
+        ${hasPurchased ? '<div class="purchased-tag">✓ Has Purchased</div>' : ''}
+      </div>`;
+  }).join('');
+}
+
+function filterMembers() { renderMembers(allMembers); }
+
+// ── ANALYTICS PAGE ────────────────────────────────────────────────────────
+async function loadAnalytics() {
+  document.getElementById('analyticsTopItems').innerHTML = '<div class="loading"><div class="loading-spinner"></div><br>Crunching numbers...</div>';
+  try {
+    const res = await fetch(`${API}/analytics`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+
+    document.getElementById('a-totalRevenue').textContent = 'R$' + (data.totalRevenue || 0).toLocaleString();
+    document.getElementById('a-totalSales').textContent = (data.totalSales || 0).toLocaleString();
+    document.getElementById('a-avgOrder').textContent = 'R$' + (data.avgOrderValue || 0);
+    document.getElementById('a-topItem').textContent = data.topItems?.[0]?.name?.slice(0, 18) || '—';
+    document.getElementById('a-itemCount').textContent = (data.topItems?.length || 0) + ' items';
+
+    // Revenue chart
+    const days = data.dailyRevenue || [];
+    if (revenueChart) revenueChart.destroy();
+    revenueChart = new Chart(document.getElementById('revenueChart'), {
+      type: 'bar',
+      data: {
+        labels: days.map(d => d.date.slice(5)),
+        datasets: [{
+          label: 'Revenue (R$)',
+          data: days.map(d => d.revenue),
+          backgroundColor: '#00e87a33',
+          borderColor: '#00e87a',
+          borderWidth: 1.5,
+          borderRadius: 4,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: '#55536a', font: { family: 'JetBrains Mono', size: 10 } }, grid: { color: '#1a1a20' } },
+          y: { ticks: { color: '#55536a', font: { family: 'JetBrains Mono', size: 10 } }, grid: { color: '#1a1a20' } }
+        }
+      }
+    });
+
+    // Item donut chart
+    const top5 = (data.topItems || []).slice(0, 5);
+    if (itemChart) itemChart.destroy();
+    itemChart = new Chart(document.getElementById('itemChart'), {
+      type: 'doughnut',
+      data: {
+        labels: top5.map(i => i.name.slice(0, 20)),
+        datasets: [{
+          data: top5.map(i => i.revenue),
+          backgroundColor: ['#00e87a', '#4d9fff', '#a259ff', '#ffb830', '#ff4d6a'],
+          borderWidth: 0,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { color: '#9996b0', font: { family: 'JetBrains Mono', size: 10 }, padding: 12 }
+          }
+        }
+      }
+    });
+
+    // Top items list
+    const maxRev = data.topItems?.[0]?.revenue || 1;
+    document.getElementById('analyticsTopItems').innerHTML = (data.topItems || []).map((item, i) => `
+      <div class="top-item">
+        <div class="top-rank">${i+1}</div>
+        <div class="top-info">
+          <div class="top-name">${escHtml(item.name)}</div>
+          <div class="top-sales">${item.sales} sold</div>
+        </div>
+        <div class="top-bar-wrap"><div class="top-bar" style="width:${Math.round(item.revenue/maxRev*100)}%"></div></div>
+        <div class="top-rev">R$${item.revenue.toLocaleString()}</div>
+      </div>`).join('') || '<div class="loading">No data yet.</div>';
+
+    setLastUpdated();
+  } catch(e) {
+    document.getElementById('analyticsTopItems').innerHTML = `<div class="error-msg">⚠ Error: ${e.message}</div>`;
+  }
+}
+
+// ── UTILS ─────────────────────────────────────────────────────────────────
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+loadGroupInfo();
+loadFeed();
+
+// Auto-refresh sales every 30 seconds
+setInterval(() => {
+  if (currentPage === 'sales') loadFeed();
+}, 30000);
+</script>
+</body>
+</html>
